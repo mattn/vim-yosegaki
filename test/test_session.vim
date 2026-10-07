@@ -5,7 +5,7 @@ set hidden
 let s:log = []
 
 function! s:wait(cond) abort
-  for _ in range(200)
+  for _ in range(1000)
     if eval(a:cond)
       return
     endif

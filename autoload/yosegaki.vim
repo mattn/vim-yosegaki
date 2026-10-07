@@ -19,7 +19,9 @@ function! s:normalize(url) abort
     throw 'yosegaki: unsupported server: ' . a:url
   endif
   if url !~# '^wss\?://'
-    let url = 'ws://' . url
+    " A bare host is a public server behind TLS, unless it is this machine.
+    let local = url =~# '^\%(localhost\|127\.\|\[::1\]\)'
+    let url = (local ? 'ws://' : 'wss://') . url
   endif
   return url =~# '/ws$' ? url : url . '/ws'
 endfunction
@@ -607,7 +609,13 @@ endfunction
 
 function! yosegaki#leave(...) abort
   let st = a:0 ? s:current(a:1) : s:current()
-  call job_stop(st.job)
+  " Closing stdin makes the bridge say goodbye to the server; kill it only if
+  " it hangs.
+  if job_status(st.job) ==# 'run'
+    call ch_close_in(job_getchannel(st.job))
+    let job = st.job
+    call timer_start(3000, {-> job_status(job) ==# 'run' ? job_stop(job) : 0})
+  endif
   call s:cleanup(st.bufnr)
 endfunction
 
@@ -694,4 +702,8 @@ endfunction
 " For tests.
 function! yosegaki#_session(bufnr) abort
   return get(s:sessions, a:bufnr, {})
+endfunction
+
+function! yosegaki#_normalize(url) abort
+  return s:normalize(a:url)
 endfunction
