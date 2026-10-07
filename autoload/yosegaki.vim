@@ -34,8 +34,22 @@ function! s:command() abort
   return get(g:, 'yosegaki_command', 'yosegaki')
 endfunction
 
+" Characters that must not be shown next to a cursor: control characters,
+" zero-width and bidi controls, and line or paragraph separators.
+let s:unsafe = '[\x00-\x1f\x7f-\x9f\u00ad\u061c\u180e\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff\ufff9-\ufffb]'
+
 function! s:name() abort
-  return get(g:, 'yosegaki_name', empty($USER) ? 'anonymous' : $USER)
+  let name = get(g:, 'yosegaki_name', empty($USER) ? 'anonymous' : $USER)
+  if type(name) != v:t_string || name ==# '' || name =~# s:unsafe
+  \ || name !=# trim(name) || strchars(name) > 32
+    throw 'yosegaki: g:yosegaki_name must be 1 to 32 printable characters, without line breaks or control characters'
+  endif
+  return name
+endfunction
+
+" The server checks names, but do not trust what comes back either.
+function! s:label(s) abort
+  return strcharpart(substitute(type(a:s) == v:t_string ? a:s : string(a:s), s:unsafe, '', 'g'), 0, 64)
 endfunction
 
 function! s:echo(msg) abort
@@ -385,6 +399,11 @@ endfunction
 function! s:handle(st, msg) abort
   let st = a:st
   let t = a:msg.type
+  for key in ['name', 'title', 'reason', 'error']
+    if has_key(a:msg, key)
+      let a:msg[key] = s:label(a:msg[key])
+    endif
+  endfor
   if t ==# 'op'
     call s:flush(st)
     let st.rev = a:msg.rev
@@ -453,6 +472,7 @@ function! s:on_init(st, msg) abort
   let st.title = a:msg.title
   let st.peers = {}
   for p in a:msg.peers
+    let p.name = s:label(p.name)
     let st.peers[p.id] = p
   endfor
   if st.role !=# 'host'
@@ -464,7 +484,7 @@ function! s:on_init(st, msg) abort
     call setbufline(bufnr, 1, lines)
     call setbufvar(bufnr, '&undolevels', undolevels)
     call setbufvar(bufnr, '&modified', 0)
-    if a:msg.filetype !=# ''
+    if a:msg.filetype =~# '^[A-Za-z0-9_.-]\{1,32}$'
       call setbufvar(bufnr, '&filetype', a:msg.filetype)
     endif
     let st.shadow = lines
@@ -598,8 +618,11 @@ function! yosegaki#join(target) abort
     let [server, session] = [s:normalize(m[1]), m[2]]
   elseif target =~# '^[a-z2-7]\{16}$'
     let [server, session] = [s:server(), target]
+  elseif target =~# '[:./]' || target ==# 'localhost'
+    " Only a server: pick one of its public sessions.
+    return yosegaki#list(target)
   else
-    throw 'yosegaki: give the link shown by :YosegakiShare'
+    throw 'yosegaki: give the link shown by :YosegakiShare, or a server'
   endif
   enew
   setlocal buftype=nofile bufhidden=hide noswapfile nomodifiable
@@ -672,7 +695,7 @@ function! yosegaki#list(...) abort
     call s:echo('no public sessions')
     return
   endif
-  let items = map(copy(list), {_, v -> printf('%s  (%s, %d people)', v.title, v.host, v.people)})
+  let items = map(copy(list), {_, v -> printf('%s  (%s, %d %s)', v.title, v.host, v.people, v.people == 1 ? 'person' : 'people')})
   call popup_menu(items, {
   \ 'title': ' yosegaki: public sessions ',
   \ 'callback': {id, result -> result > 0 ? yosegaki#cmd('join', server . '/' . list[result - 1].id) : 0},

@@ -38,7 +38,9 @@ COMMANDS					*yosegaki-commands*
 
 :YosegakiJoin {link}				*:YosegakiJoin*
 	Join the session of {link} in a new buffer. A bare session id joins
-	on the default server.
+	on the default server. A server alone, such as
+	"yosegaki.compile-error.net", shows its public sessions like
+	|:YosegakiList|.
 
 :YosegakiList [{server}]			*:YosegakiList*
 	Show public sessions in a menu and join the selected one.
@@ -75,7 +77,10 @@ g:yosegaki_server				*g:yosegaki_server*
 
 g:yosegaki_name					*g:yosegaki_name*
 	Your name as others see it, next to your cursor and in requests. It
-	is only a label; guests are told apart by ID. Default: $USER
+	is only a label; guests are told apart by ID. It must be 1 to 32
+	printable characters without leading or trailing spaces; line breaks,
+	control characters and invisible formatting characters are refused,
+	here and by the server. Default: $USER
 
 g:yosegaki_command				*g:yosegaki_command*
 	Path of the yosegaki command. Default: "yosegaki"
