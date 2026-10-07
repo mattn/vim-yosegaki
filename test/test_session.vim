@@ -100,10 +100,11 @@ function! s:run() abort
   call s:idle()
   call s:check('converged', getbufline(s:a, 1, '$'), getbufline(s:b, 1, '$'))
 
-  " A third, private session: guests wait for approval. Server from $YOSEGAKI_SERVER.
-  let $YOSEGAKI_SERVER = $YOSEGAKI_URL
+  " A third, private session: guests wait for approval. The server comes
+  " from b:yosegaki_server, and the bare id joins on the same one.
   enew
   let s:c = bufnr('%')
+  let b:yosegaki_server = $YOSEGAKI_URL
   call setline(1, 'secret')
   let g:yosegaki_name = 'host2'
   YosegakiShare private

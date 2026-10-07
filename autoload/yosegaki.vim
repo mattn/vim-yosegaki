@@ -6,8 +6,9 @@ let s:colors = [
 \ [5, '#c678dd'], [6, '#56b6c2'], [9, '#ff875f'], [10, '#87d787'],
 \]
 
+" A buffer that has been in a session keeps using that session's server.
 function! s:server() abort
-  let server = get(g:, 'yosegaki_server', $YOSEGAKI_SERVER)
+  let server = get(b:, 'yosegaki_server', '')
   return s:normalize(empty(server) ? 'ws://localhost:8080' : server)
 endfunction
 
@@ -492,6 +493,7 @@ function! s:on_init(st, msg) abort
   endif
   call setbufvar(bufnr, '&modifiable', s:can_edit(st))
   call setbufvar(bufnr, 'yosegaki_session', st.session)
+  call setbufvar(bufnr, 'yosegaki_server', st.server)
   let st.ready = 1
   let st.listener = listener_add(function('s:on_change'), bufnr)
   execute printf('augroup yosegaki_%d', bufnr)

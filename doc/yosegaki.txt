@@ -32,7 +32,7 @@ COMMANDS					*yosegaki-commands*
 :YosegakiShare [public|private] [{server}]	*:YosegakiShare*
 	Share the current buffer. The default is private. {server} is the
 	server to use, such as "localhost:8080"; without it
-	|g:yosegaki_server| is used. A link like >
+	|b:yosegaki_server| or "ws://localhost:8080" is used. A link like >
 		ws://localhost:8080/ws/abcdefghijklmnop
 <	is shown; give it to your guests.
 
@@ -69,11 +69,12 @@ COMMANDS					*yosegaki-commands*
 ==============================================================================
 OPTIONS						*yosegaki-options*
 
-g:yosegaki_server				*g:yosegaki_server*
-	Default server for |:YosegakiShare| and |:YosegakiList|. Guests do not
-	need it since the link carries the server. $YOSEGAKI_SERVER is used
-	when this is not set.
-	Default: "ws://localhost:8080"
+b:yosegaki_server				*b:yosegaki_server*
+	The server of the buffer. It is set once the buffer is connected to
+	a session, so commands run there without a server use the same one,
+	also after leaving. You can set it yourself before sharing. A server
+	given as an argument comes first; without either,
+	"ws://localhost:8080" is used.
 
 g:yosegaki_name					*g:yosegaki_name*
 	Your name as others see it, next to your cursor and in requests. It
