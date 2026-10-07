@@ -1,0 +1,96 @@
+*yosegaki.txt*	Collaborative editing for Vim
+
+Author: Yasuhiro Matsumoto <mattn.jp@gmail.com>
+License: MIT
+
+==============================================================================
+INTRODUCTION					*yosegaki*
+
+yosegaki lets several Vim instances edit the same buffer at the same time
+through a yosegaki server. Edits are merged with operational transformation,
+so everybody ends up with the same text.
+
+The person who shares a buffer is the host. Others are guests.
+
+  public	Anyone who knows the session id can view the buffer. It is
+		also shown by |:YosegakiList|. Guests ask for permission to
+		edit with |:YosegakiRequestEdit|.
+  private	Guests wait until the host lets them in, either as an editor
+		or as a viewer.
+
+The session ends when the host leaves.
+
+Requirements:
+- Vim with |+channel|, |+textprop| and |+popupwin|
+- The yosegaki command, for everyone including guests. Get it from
+  https://github.com/mattn/yosegaki/releases or: >
+	go install github.com/mattn/yosegaki@latest
+<
+==============================================================================
+COMMANDS					*yosegaki-commands*
+
+:YosegakiShare [public|private] [{server}]	*:YosegakiShare*
+	Share the current buffer. The default is private. {server} is the
+	server to use, such as "localhost:8080"; without it
+	|g:yosegaki_server| is used. A link like >
+		ws://localhost:8080/ws/abcdefghijklmnop
+<	is shown; give it to your guests.
+
+:YosegakiJoin {link}				*:YosegakiJoin*
+	Join the session of {link} in a new buffer. A bare session id joins
+	on the default server.
+
+:YosegakiList [{server}]			*:YosegakiList*
+	Show public sessions in a menu and join the selected one.
+
+:YosegakiLeave					*:YosegakiLeave*
+	Leave the session of the current buffer. The text stays.
+
+:YosegakiStatus					*:YosegakiStatus*
+	Show the members of the session and pending requests.
+
+:YosegakiRequestEdit				*:YosegakiRequestEdit*
+	Ask the host for permission to edit (viewers only).
+
+:YosegakiAllow {id} [view]			*:YosegakiAllow*
+	Host only. Let the guest {id} edit, or with "view" let a pending guest
+	in as a viewer. {id} is shown by |:YosegakiStatus|, in requests and
+	next to the cursors of others.
+	Requests also pop up; press the key shown or <Esc> to answer later.
+
+:YosegakiDeny {id}				*:YosegakiDeny*
+	Host only. Decline the request of the guest {id}.
+
+:YosegakiRevoke {id}				*:YosegakiRevoke*
+	Host only. Make the editor {id} a viewer again.
+
+==============================================================================
+OPTIONS						*yosegaki-options*
+
+g:yosegaki_server				*g:yosegaki_server*
+	Default server for |:YosegakiShare| and |:YosegakiList|. Guests do not
+	need it since the link carries the server. $YOSEGAKI_SERVER is used
+	when this is not set.
+	Default: "ws://localhost:8080"
+
+g:yosegaki_name					*g:yosegaki_name*
+	Your name as others see it, next to your cursor and in requests. It
+	is only a label; guests are told apart by ID. Default: $USER
+
+g:yosegaki_command				*g:yosegaki_command*
+	Path of the yosegaki command. Default: "yosegaki"
+
+Use yosegaki#statusline() in 'statusline' to see your role and the number
+of members: >
+	set statusline+=%{yosegaki#statusline()}
+<
+Highlight groups YosegakiCursor0 to YosegakiCursor7 and YosegakiLabel0 to
+YosegakiLabel7 color the cursors and names of others.
+
+==============================================================================
+LIMITATIONS					*yosegaki-limitations*
+
+- Undo is shared with remote edits: |u| may undo text typed by others.
+- Encoding must be UTF-8.
+
+ vim:tw=78:ts=8:noet:ft=help:norl:
