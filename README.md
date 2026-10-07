@@ -16,7 +16,7 @@ Plug 'mattn/vim-yosegaki'
 
 ## Usage
 
-Run a server (`yosegaki serve`, or `docker run -p 8080:8080 ghcr.io/mattn/yosegaki`). The default server is `ws://localhost:8080`.
+Use a public server such as `yosegaki.compile-error.net`, or run one (`yosegaki serve`, or `docker run -p 8080:8080 ghcr.io/mattn/yosegaki`). A buffer remembers its server in `b:yosegaki_server` once connected; without one, `ws://localhost:8080` is used.
 
 Host:
 
@@ -30,7 +30,7 @@ Guest:
 
 ```vim
 :YosegakiJoin <link>
-:YosegakiList            " public sessions
+:YosegakiJoin <server>   " pick one of its public sessions, same as :YosegakiList <server>
 :YosegakiRequestEdit     " ask the host for edit permission
 ```
 
